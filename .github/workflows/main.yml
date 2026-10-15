@@ -23,22 +23,31 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore
 
-    # --- СБОРКА WINDOWS (Релиз в папку локальной сборки dist/windows) ---
+    # --- СБОРКА WINDOWS ---
     - name: Build Windows App (Release)
-      run: dotnet publish -c Release -f net10.0-windows10.0.19041.0 -o dist/windows /p:GenerateAppxPackageOnBuild=false
+      run: dotnet publish -c Release -f net10.0-windows10.0.19041.0 /p:GenerateAppxPackageOnBuild=false
 
     - name: Upload Windows App Artifact
       uses: actions/upload-artifact@v4
       with:
         name: maui-app-windows
-        path: dist/windows/
+        # Робот сам зайдет в bin и заберет всё содержимое папки публикации
+        path: |
+          **/bin/Release/net10.0-windows*/**/*.exe
+          **/bin/Release/net10.0-windows*/**/*.dll
+        if-no-files-found: warn
 
-    # --- СБОРКА ANDROID (Релиз в папку локальной сборки dist/android) ---
+    # --- СБОРКА ANDROID ---
     - name: Build Android App (Release)
-      run: dotnet publish -c Release -f net10.0-android -o dist/android
+      # Строим билд, .NET сам создаст APK в папке net10.0-android
+      run: dotnet build -c Release -f net10.0-android
 
     - name: Upload Android APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: maui-app-android
-        path: dist/android/*-Signed.apk
+        # Сканируем весь проект на наличие любых скомпилированных APK
+        path: |
+          **/bin/Release/net10.0-android/*.apk
+          **/bin/Release/net10.0-android/publish/*.apk
+        if-no-files-found: warn
