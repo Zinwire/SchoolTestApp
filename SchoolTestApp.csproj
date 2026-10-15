@@ -7,10 +7,7 @@
 
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 
-		<PublishTrimmed>true</PublishTrimmed>
-		<TrimMode>link</TrimMode>
 
-		<PublishAot>true</PublishAot>
 
 		<!-- Note for MacCatalyst:
 		The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.

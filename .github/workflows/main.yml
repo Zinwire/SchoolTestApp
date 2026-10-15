@@ -25,7 +25,7 @@ jobs:
 
     # --- СБОРКА WINDOWS ---
     - name: Build Windows App (Release)
-      run: dotnet publish -c Release -f net10.0-windows10.0.19041.0 /p:GenerateAppxPackageOnBuild=false
+      run: dotnet publish -c Release -f net10.0-windows10.0.19041.0 --self-contained true -r win-x64 /p:GenerateAppxPackageOnBuild=false
 
     - name: Upload Windows App Artifact
       uses: actions/upload-artifact@v4
