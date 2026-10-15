@@ -1,4 +1,4 @@
-name: Fast MAUI Build (.NET 10)
+name: MAUI Production Build
 
 on:
   push:
@@ -17,26 +17,13 @@ jobs:
       with:
         dotnet-version: '10.0.x'
 
-    # КЭШИРОВАНИЕ: Этот шаг сохраняет установленный MAUI, чтобы не качать его заново
-    - name: Cache MAUI Workloads
-      uses: actions/cache@v4
-      id: cache-workloads
-      with:
-        path: |
-          C:\Program Files\dotnet\metadata
-          C:\Program Files\dotnet\packs
-          C:\Program Files\dotnet\sdk-manifests
-          C:\Program Files\dotnet\workloads
-        key: ${{ runner.os }}-maui-10-${{ hashFiles('**/*.csproj') }}
-
     - name: Install MAUI Workloads
-      if: steps:cache-workloads.outputs.cache-hit != 'true'
       run: dotnet workload install maui-android maui-windows
 
     - name: Restore Dependencies
       run: dotnet restore
 
-    # --- СБОРКА WINDOWS (В папку dist/windows) ---
+    # --- СБОРКА WINDOWS (Релиз в папку локальной сборки dist/windows) ---
     - name: Build Windows App (Release)
       run: dotnet publish -c Release -f net10.0-windows10.0.19041.0 -o dist/windows /p:GenerateAppxPackageOnBuild=false
 
@@ -46,7 +33,7 @@ jobs:
         name: maui-app-windows
         path: dist/windows/
 
-    # --- СБОРКА ANDROID (В папку dist/android) ---
+    # --- СБОРКА ANDROID (Релиз в папку локальной сборки dist/android) ---
     - name: Build Android App (Release)
       run: dotnet publish -c Release -f net10.0-android -o dist/android
 
