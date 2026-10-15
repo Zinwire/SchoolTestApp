@@ -1,4 +1,4 @@
-name: Build MAUI App (.NET 10)
+name: Fast MAUI Build (.NET 10)
 
 on:
   push:
@@ -15,34 +15,43 @@ jobs:
     - name: Setup .NET 10
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '10.0.x' # Используем актуальный .NET 10
+        dotnet-version: '10.0.x'
+
+    # КЭШИРОВАНИЕ: Этот шаг сохраняет установленный MAUI, чтобы не качать его заново
+    - name: Cache MAUI Workloads
+      uses: actions/cache@v4
+      id: cache-workloads
+      with:
+        path: |
+          C:\Program Files\dotnet\metadata
+          C:\Program Files\dotnet\packs
+          C:\Program Files\dotnet\sdk-manifests
+          C:\Program Files\dotnet\workloads
+        key: ${{ runner.os }}-maui-10-${{ hashFiles('**/*.csproj') }}
 
     - name: Install MAUI Workloads
-      # Устанавливаем сразу оба ворклоада для Android и Windows
+      if: steps:cache-workloads.outputs.cache-hit != 'true'
       run: dotnet workload install maui-android maui-windows
 
     - name: Restore Dependencies
       run: dotnet restore
 
-    # --- СБОРКА ПОД ANDROID ---
-    - name: Build Android App (Debug)
-      run: dotnet build -c Debug -f net10.0-android --no-restore
+    # --- СБОРКА WINDOWS (В папку dist/windows) ---
+    - name: Build Windows App (Release)
+      run: dotnet publish -c Release -f net10.0-windows10.0.19041.0 -o dist/windows /p:GenerateAppxPackageOnBuild=false
 
-    - name: Upload Android APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: maui-app-android
-        path: |
-          **/bin/Debug/net10.0-android/*-Signed.apk
-
-    # --- СБОРКА ПОД WINDOWS ---
-    - name: Build Windows App (Debug)
-      run: dotnet build -c Debug -f net10.0-windows10.0.19041.0 --no-restore
-
-    # Упаковываем Windows-сборку, чтобы её было удобно скачать одним архивом
-    - name: Upload Windows App
+    - name: Upload Windows App Artifact
       uses: actions/upload-artifact@v4
       with:
         name: maui-app-windows
-        path: |
-          **/bin/Debug/net10.0-windows10.0.19041.0/win10-x64/
+        path: dist/windows/
+
+    # --- СБОРКА ANDROID (В папку dist/android) ---
+    - name: Build Android App (Release)
+      run: dotnet publish -c Release -f net10.0-android -o dist/android
+
+    - name: Upload Android APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: maui-app-android
+        path: dist/android/*-Signed.apk
